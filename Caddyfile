@@ -1,0 +1,25 @@
+n8n.jasongoossens.be {
+    reverse_proxy n8n:5678
+}
+
+budget.jasongoossens.be {
+    basicauth {
+        jason $2a$14$hgFeUJcfOOHnAjJ1BJ5I3OBnR.kOmVCqCMCVlHGBzWfpwWdPE46mu
+    }
+
+    handle /api/* {
+        reverse_proxy budgetme-backend:3000
+    }
+
+    handle {
+        reverse_proxy budgetme-frontend:80
+    }
+}
+
+status.jasongoossens.be {
+    basicauth {
+        jason $2a$14$hgFeUJcfOOHnAjJ1BJ5I3OBnR.kOmVCqCMCVlHGBzWfpwWdPE46mu
+    }
+
+    reverse_proxy hosting-pi-status:8080
+}
