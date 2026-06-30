@@ -1,0 +1,71 @@
+services:
+  n8n:
+    image: n8nio/n8n:2.27.4-a4d0dfc
+    container_name: n8n
+    restart: unless-stopped
+    environment:
+      - N8N_HOST=n8n.jasongoossens.be
+      - WEBHOOK_URL=https://n8n.jasongoossens.be/
+      - GENERIC_TIMEZONE=Europe/Brussels
+      - TZ=Europe/Brussels
+      - N8N_SECURE_COOKIE=true
+      - N8N_RESTRICT_FILE_ACCESS_TO=/data/trading-config
+    volumes:
+      - homelab_n8n_data:/home/node/.n8n
+      - /home/admin/homelab/trading-automation/config:/data/trading-config:ro
+    networks:
+      - homelab
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  hosting-pi-status:
+    build:
+      context: ./hosting-pi-status
+    container_name: hosting-pi-status
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - homelab
+
+  n8n-postgres:
+    image: postgres:16-alpine
+    container_name: n8n-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: n8n_tools
+      POSTGRES_USER: n8n_tools
+      POSTGRES_PASSWORD: mlojbdrmdj3(.
+    volumes:
+      - n8n_postgres_data:/var/lib/postgresql/data
+    networks:
+      - homelab
+
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - homelab
+
+volumes:
+  homelab_n8n_data:
+  n8n_postgres_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  homelab:
+    name: homelab
